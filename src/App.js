@@ -9,12 +9,14 @@ class App extends React.Component {
       isLoading: false,
       displayLocation: '',
       weather: {},
+      error: '',
     };
     this.fetchWeather = this.fetchWeather.bind(this);
   }
 
   async fetchWeather(location) {
     try {
+      this.setState({ error: '' });
       this.setState({ isLoading: true });
       // 1) Getting location (geocoding)
       const geoRes = await fetch(
@@ -38,7 +40,8 @@ class App extends React.Component {
       const weatherData = await weatherRes.json();
       this.setState({ weather: weatherData.daily });
     } catch (err) {
-      console.err(err);
+      console.log(err);
+      this.setState({ error: err.message });
     } finally {
       this.setState({ isLoading: false });
     }
@@ -60,12 +63,63 @@ class App extends React.Component {
           Get weather
         </button>
         {this.state.isLoading && <p className='loader'>Loading...</p>}
+        {this.state.weather.weathercode && (
+          <Weather
+            weather={this.state.weather}
+            location={this.state.displayLocation}
+          />
+        )}
+        {this.state.error && <p>{this.state.error}</p>}
       </div>
     );
   }
 }
 
 export default App;
+
+class Weather extends React.Component {
+  render() {
+    const {
+      temperature_2m_max: max,
+      temperature_2m_min: min,
+      time: dates,
+      weathercode: codes,
+    } = this.props.weather;
+
+    return (
+      <div>
+        <h2>Weather {this.props.location}</h2>
+        <ul className='weather'>
+          {dates.map((date, id) => (
+            <Day
+              date={date}
+              max={max.at(id)}
+              min={min.at(id)}
+              code={codes.at(id)}
+              key={date}
+              isToday={id === 0}
+            />
+          ))}
+        </ul>
+      </div>
+    );
+  }
+}
+
+class Day extends React.Component {
+  render() {
+    const { date, min, max, code, isToday } = this.props;
+    return (
+      <li className='day'>
+        <span>{getWeatherIcon(code)}</span>
+        <p>{isToday ? 'Today' : formatDay(date)}</p>
+        <p>
+          {Math.floor(min)}&deg; &mdash; <strong>{Math.ceil(max)}&deg;</strong>
+        </p>
+      </li>
+    );
+  }
+}
 
 function getWeatherIcon(wmoCode) {
   const icons = new Map([
