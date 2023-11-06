@@ -1,21 +1,26 @@
 import React from 'react';
 
 class App extends React.Component {
-  state = {
-    location: '',
-    isLoading: false,
-    displayLocation: '',
-    weather: {},
-    error: '',
-  };
+  constructor(props) {
+    super(props);
 
-  fetchWeather = async () => {
+    this.state = {
+      location: '',
+      isLoading: false,
+      displayLocation: '',
+      weather: {},
+      error: '',
+    };
+    this.fetchWeather = this.fetchWeather.bind(this);
+  }
+
+  async fetchWeather(location) {
     try {
       this.setState({ error: '' });
       this.setState({ isLoading: true });
       // 1) Getting location (geocoding)
       const geoRes = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${this.state.location}`
+        `https://geocoding-api.open-meteo.com/v1/search?name=${location}`
       );
       const geoData = await geoRes.json();
       console.log(geoData);
@@ -40,7 +45,7 @@ class App extends React.Component {
     } finally {
       this.setState({ isLoading: false });
     }
-  };
+  }
 
   render() {
     return (
@@ -54,7 +59,7 @@ class App extends React.Component {
             onChange={(e) => this.setState({ location: e.target.value })}
           ></input>
         </div>
-        <button onClick={() => this.fetchWeather()}>
+        <button onClick={() => this.fetchWeather(this.state.location)}>
           Get weather
         </button>
         {this.state.isLoading && <p className='loader'>Loading...</p>}
